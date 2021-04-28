@@ -274,6 +274,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "SRSp", choices = names(data_in_use))
   }
   
+  # Reading in the file ---------
   observeEvent(input$read, {
     #print("READ")
     file = input$file1$datapath
@@ -293,17 +294,18 @@ server <- function(input, output, session) {
       
       ext = tools::file_ext(file)
     }
-    #print(file)
     
     req(file)
+    #To do: Figure out how to put out a better warning message if they haven't input a file
     #validate(need(ext == "rtf", "Please upload an rtf file"))
     if (ext == "xlsx"){
       v$data = read_excel(file)
     }
-    else if (ext == "rtf"){
+    # To do: Erase this if no problems experienced by 5/10/2021
+    #else if (ext == "rtf"){
       # To do: fix or get rid of rtf functionality
-      v$data = read_rtf(file, skip=0)
-    }
+      #v$data = read_rtf(file, skip=0)
+    #}
     else if (ext == "csv"){
       v$data = read_csv(file)
     }
@@ -311,6 +313,8 @@ server <- function(input, output, session) {
     postRead()
   })
   
+  # After reading in the file, display it (if the user chooses to)
+  # Also update the available data
   postRead = function(){
 
     output$front_table = renderDT({
@@ -382,8 +386,6 @@ server <- function(input, output, session) {
     updateSelectInput(session, "values", choices = names(v$data))
   })
   
-  #wider:
-  #TODO: wider
   
   #### end Tidying stuff
   
@@ -565,33 +567,7 @@ server <- function(input, output, session) {
   }) 
   
   #### End Species Richness
-  # 
-  # #### Start Shannon-Wiener
-  # 
-  # tempSW = eventReactive(input$SWCalc, {
-  #   sw_data = v$data_in_use
-  #   sw_data_copy = sw_data
-  #   sw_data %<>%
-  #     group_by_(as.name(input$SWGeo), as.name(input$SWSp)) %>%
-  #     summarise(count_sw = n()) %>%
-  #     mutate(total = sum(count_sw)) %>%
-  #     summarise(SWIndex = -sum(count_sw / total * log(count_sw / total)))
-  #   
-  #   full_join(sw_data, sw_data_copy, by=str(input$SWGeo))
-  # })
-  # 
-  # observeEvent(input$SWCalc, {
-  #   v$data_in_use = tempSW()
-  #   
-  #   updateGraphingOptions(v$data_in_use)
-  #   data_to_use <<- "diversity"
-  # })
-  # 
-  # output$SWTable = renderDT(
-  #   v$data_in_use
-  # )
-  # 
-  # #### End Shannon-Wiener
+  
   
   #### Shared Graphing
   
@@ -615,7 +591,6 @@ server <- function(input, output, session) {
     output$Walter = renderPlot({
       data_wl = graphing_data()
       
-      #print(data_wl)
       
       stationName = input$stationName
       latitude = input$lat
@@ -694,11 +669,6 @@ server <- function(input, output, session) {
       diagwl(data_matrix, est=stationInfo, alt=NA, per=yearRange, margen=c(4, 4, 5, 4), mlab="",
              pcol="#005ac8", tcol="#e81800", pfcol="#79e6e8", sfcol="#09a0d1", shem=shem_wl,
              p3line=FALSE)
-      
-            
-      # diagwl(data_matrix, est="", alt=NA, per="", margen=c(4, 4, 5, 4), mlab="",
-      #        pcol="#005ac8", tcol="#e81800", pfcol="#79e6e8", sfcol="#09a0d1", shem=shem_wl,
-      #        p3line=FALSE)
       
     },
     width = 500,
