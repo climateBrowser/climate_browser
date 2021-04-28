@@ -846,7 +846,7 @@ server <- function(input, output, session) {
     
     output$histogram = renderPlot({
       ggplot(data = hist_data, aes_q(as.name(input$xAxisHist))) +
-        geom_histogram(bins = input$histBins, stat = "count") +
+        geom_histogram(bins=input$histBins) + #, stat = "count") +
         theme_bw()
     })  
   })
