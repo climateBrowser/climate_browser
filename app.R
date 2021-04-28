@@ -63,6 +63,7 @@ ui <- fluidPage(
             
           )
       ),
+    
       tabPanel("Diversity Indices",
         h4("This page expects your data to have a column with plot specifiers and a column with species specifiers."),
         h4("Suggested additional columns are latitude/longitude, or anything consistent in each plot."),
@@ -110,6 +111,7 @@ ui <- fluidPage(
               plotOutput("Walter")
             )
           ),
+          
           tabPanel("Geoplotting",
             h1("Map your data"),
             leafletOutput("watershedMap"),
@@ -119,6 +121,7 @@ ui <- fluidPage(
             selectInput("mapLong", "Longitutde column:", list("none")),
             actionButton("mapLatLongUpdated", "lat/long chosen")
           ),
+          
           tabPanel("Scatter Plot",
             sidebarPanel(
               selectInput("xAxisScatter", "X Axis", list("none")),
@@ -129,6 +132,7 @@ ui <- fluidPage(
               plotOutput("scatter")
             )
           ),
+          
           tabPanel("Violin Plot",
             sidebarPanel(
              selectInput("xAxisViolin", "X Axis", list("none")),
@@ -139,6 +143,7 @@ ui <- fluidPage(
              plotOutput("violin")
             )
           ),
+          
           tabPanel("Line Graph",
             sidebarPanel(
              selectInput("xAxisLine", "X Axis", list("none")),
@@ -153,6 +158,7 @@ ui <- fluidPage(
              plotOutput("line")
             )
           ),
+          
           tabPanel("Boxplot",
             sidebarPanel(
               selectInput("xAxisBox", "X Axis", list("none")),
@@ -163,6 +169,7 @@ ui <- fluidPage(
               plotOutput("box")
             )
           ),
+          
           tabPanel("Histogram",
             sidebarPanel(
              selectInput("xAxisHist", "X Axis", list("none")),
@@ -177,37 +184,44 @@ ui <- fluidPage(
         #)#,
       )
     ),
+    
       navbarMenu("Statistical Tests",
-                 tabPanel("One-Sample T-Test",
-                          sidebarPanel(
-                            selectInput("one_t_test_var","Select Variable to Test:",list("none")),
-                            numericInput('diff_var', 'Null hypothesis mean (usually left at zero)', value=0),
-                            actionButton("perform_one_sample", "Perform Test")
-                          ),
-                          mainPanel(
-                            textOutput("one_sample_output")
-                          )
-                 ),
-                 tabPanel("Two-Sample T-Test",
-                          sidebarPanel(
-                            selectInput("two_sample_var_one","Select Variable One:",list("none")),
-                            selectInput("two_sample_var_two","Select Variable Two:",list("none")),
-                            checkboxInput("paired_or_not", "Paired", value = FALSE),
-                            checkboxInput("equal_variance", "Equal Variance", value = FALSE),
-                            actionButton("perform_two_sample", "Perform Test")
-                          ),
-                          mainPanel(
-                            textOutput("two_sample_output")
-                          )
-                 ),
-                 tabPanel("Log-Transform"),
-                 tabPanel("ANOVA")
-      ),     
+        tabPanel("One-Sample T-Test",
+          sidebarPanel(
+            selectInput("one_t_test_var","Select Variable to Test:",list("none")),
+              numericInput('diff_var', 'Null hypothesis mean (usually left at zero)', value=0),
+                actionButton("perform_one_sample", "Perform Test")
+          ),
+          mainPanel(
+            textOutput("one_sample_output")
+          )
+        ),
+        tabPanel("Two-Sample T-Test",
+          sidebarPanel(
+            selectInput("two_sample_var_one","Select Variable One:",list("none")),
+            selectInput("two_sample_var_two","Select Variable Two:",list("none")),
+            checkboxInput("paired_or_not", "Paired", value = FALSE),
+            checkboxInput("equal_variance", "Equal Variance", value = FALSE),
+            actionButton("perform_two_sample", "Perform Test")
+          ),
+          mainPanel(
+            textOutput("two_sample_output")
+          )
+        ),
+        tabPanel("Log-Transform"),
+        tabPanel("ANOVA")
+        ),     
+      
       tabPanel("References"
       ),
       tabPanel("Paper" 
       ),
+      # I feel like maybe the above two should be combined into one tab
       tabPanel("About the App")
+      # I think this should actually be the first tab, i.e. the landing page.
+      # Put an explanation about what the app does, 
+      # a brief explanation about how and why the app was created,
+      # and links to tutorials (YouTube?)
              
   )
 )
