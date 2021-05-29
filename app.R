@@ -12,28 +12,39 @@ source("diagwl.R")
 library(ggplot2)
 library("RColorBrewer")
 
-datasetOption1 = "Mt Larkins, New Zealand climate data (2013-2020)"
-datasetOption2 = "Utah County climate data (2014-2020)"
-datasetOption3 = "Mt Aspiring National Park, New Zealand vegetation data"
+
+dataArea <- read_xlsx("data/DataAreaFile.xlsx", sheet = 1)
+areaFile <- read_xlsx("data/DataAreaFile.xlsx", sheet = 2)
 
 # User interface ----
 ui <- fluidPage(
   navbarPage("Climate Browser", 
     #navbarMenu("Graphing",  
       tabPanel("Upload Data",
+        fluidRow(style = "height:400px;",
+          column(5, align = "center", 
+            h2("Choose a dataset below", style="height:80px;"),
+            htmlOutput("dataTypeSelector"),
+            htmlOutput("areaSelector"),
+            htmlOutput("fileSelector")
+          ),
+          column(2, align = "center",
+            h2("or")
+          ),
+          column(5, align = "center",
+            h2("Upload your own data", style="height:80px;"),
+            h4("(overrides previous selection)"),
+            fileInput("file1", label="", accept = c(".csv", ".xlsx", ".rtf"), 
+              buttonLabel="Upload File")     
+          )
+        ),
         fluidRow(column(6, align="center", offset=3,
-          h3("Choose a dataset below"),
-          h3("or"),
-          h3("Upload your own data"),
-          radioButtons("datasetButtons", label = h4("Our Data:"),
-                       choices = list(datasetOption1, datasetOption2, datasetOption3)),
-          h4("Your Data (overrides selection above):"),
-          fileInput("file1", label="", accept = c(".csv", ".xlsx", ".rtf"), 
-            buttonLabel="Upload File"), 
-          actionButton("read", "Read File/Continue"),
-          checkboxInput("table_toggle", "Display table", value = TRUE)),
-          dataTableOutput("front_table")
-        )#,
+          actionBttn("read", "Read File/Continue", color = "success"),
+          checkboxInput("table_toggle", "Display table", value = TRUE),
+          dataTableOutput("front_table"))
+        )
+        
+        
       ),
         navbarMenu("Tidy Data",
           tabPanel("Select/Filter Data", 
@@ -90,10 +101,14 @@ ui <- fluidPage(
         tabsetPanel(
           tabPanel("Walter-Lieth Climate Diagram",
             sidebarPanel(
-              textInput('stationName', 'Name or location of the climatological station'),
-              numericInput('lat', 'Station Latitude', value=1),
-              numericInput('long', 'Station Longitude', value=1),
-              numericInput('alt', "Station Altitude", value=1),
+              uiOutput("stationInfo"),
+              uiOutput("stationLat"),
+              uiOutput("stationLong"),
+              uiOutput("stationElev"),
+              #textInput('stationName', 'Name or location of the climatological station'),
+              #numericInput('lat', 'Station Latitude', value=1),
+              #numericInput('long', 'Station Longitude', value=1),
+              #numericInput('alt', "Station Altitude", value=1),
               selectInput("monthCol", "Month column name", list("none")),
               selectInput("yearCol", "Year column name", list("none")),
               selectInput("precCol", "Precipitation column name", list("none")),
@@ -274,6 +289,23 @@ server <- function(input, output, session) {
     updateSelectInput(session, "SRSp", choices = names(data_in_use))
   }
   
+  # Selecting the file from preloaded data --------
+  output$dataTypeSelector = renderUI({
+    selectInput(inputId = "dataType", label = "Data Type:", 
+                choices = as.character(unique(dataArea$DataType)))
+  })
+  
+  output$areaSelector = renderUI({
+    areaOptions = dataArea[dataArea$DataType == input$dataType, "Area"]
+    selectInput(inputId = "area", label = "General Area:", choices = unique(areaOptions))
+  })
+  
+  output$fileSelector = renderUI({
+    fileOptions = areaFile[areaFile$Area == input$area, "Station"]
+    selectInput(inputId = "dataSource", label = "File:", choices = unique(fileOptions))
+  })
+  
+  
   # Reading in the file ---------
   observeEvent(input$read, {
     #print("READ")
@@ -281,17 +313,8 @@ server <- function(input, output, session) {
     ext <- tools::file_ext(file)
     
     if (is.null(file)) {
-      print(input$datasetButtons)
-      if (input$datasetButtons == datasetOption1) {
-        file = "data/Mt Larkins.csv"
-      }
-      if (input$datasetButtons == datasetOption2) {
-        file = "data/provo.csv"
-      }
-      if (input$datasetButtons == datasetOption3) {
-        file = "data/comb_watershed.csv"
-      }
-      
+      fileName = as.character(areaFile[areaFile$Station == input$dataSource, "File"])
+      file = paste("data", fileName, sep = "/")
       ext = tools::file_ext(file)
     }
     
@@ -301,11 +324,7 @@ server <- function(input, output, session) {
     if (ext == "xlsx"){
       v$data = read_excel(file)
     }
-    # To do: Erase this if no problems experienced by 5/10/2021
-    #else if (ext == "rtf"){
-      # To do: fix or get rid of rtf functionality
-      #v$data = read_rtf(file, skip=0)
-    #}
+
     else if (ext == "csv"){
       v$data = read_csv(file)
     }
@@ -585,7 +604,29 @@ server <- function(input, output, session) {
   #### End Shared Graphing
   
   
-  #### Walter-Lieth stuff
+  #### Walter-Lieth stuff---------
+  
+  # Auto fill based on previous input
+  output$stationInfo <- renderUI({
+    stationName <- input$dataSource
+    textInput('stationName', 'Name or location of the climatological station', 
+              value=stationName)
+  })
+  
+  output$stationLat <- renderUI({
+    latitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Latitude"])
+    numericInput('lat', 'Station Latitude', value=latitude)
+  })
+  
+  output$stationLong <- renderUI({
+    longitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Longitude"])
+    numericInput('long', 'Station Longitude', value=longitude)
+  })
+  
+  output$stationElev <- renderUI({
+    elevation <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Elevation"])
+    numericInput('elev', 'Station Elevation', value=elevation)
+  })
   
   observeEvent(input$makePlot, {
     output$Walter = renderPlot({
@@ -595,7 +636,7 @@ server <- function(input, output, session) {
       stationName = input$stationName
       latitude = input$lat
       longitude = input$long
-      altitude = input$alt
+      altitude = input$elev
       monthCol = input$monthCol
       yearCol = input$yearCol
       precCol = input$precCol
@@ -671,8 +712,8 @@ server <- function(input, output, session) {
              p3line=FALSE)
       
     },
-    width = 500,
-    height = 500
+    width = 800,
+    height = 800
     )
   })
   
@@ -878,4 +919,7 @@ server <- function(input, output, session) {
 }
 
 # Run app ----
+#The statement below causes Shiny to enter the debugger when an error occurs. 
+#options(shiny.error = )
 shinyApp(ui, server)
+
