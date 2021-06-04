@@ -247,6 +247,7 @@ server <- function(input, output, session) {
   
   #### Reading in File and Outputting Table
   
+  # TO DO: Help the server update data without reloading.
   v = reactiveValues(data = NULL, data_in_use = NULL)
   data_to_use = "raw" #use v$data for graphing by default
   
@@ -712,8 +713,8 @@ server <- function(input, output, session) {
              p3line=FALSE)
       
     },
-    width = 800,
-    height = 800
+    width = 700,
+    height = 700
     )
   })
   
