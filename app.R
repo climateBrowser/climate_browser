@@ -12,6 +12,8 @@ source("diagwl.R")
 library(ggplot2)
 library("RColorBrewer")
 
+library(profmem)
+
 
 dataArea <- read_xlsx("data/DataAreaFile.xlsx", sheet = 1)
 areaFile <- read_xlsx("data/DataAreaFile.xlsx", sheet = 2)
@@ -50,6 +52,7 @@ ui <- fluidPage(
           tabPanel("Select/Filter Data", 
             h4("Select columns by clicking on the table"),
             h4("Select rows with the boxes at the top of each column"),
+            h4("Choose whether to accept the new dataset below"),
                                      
             checkboxInput("remove_na_vals", "Remove N/A values", value = FALSE),
             
@@ -91,7 +94,7 @@ ui <- fluidPage(
           )),
         actionButton("SRCalc", "Calculate"),
         DTOutput("SRTable"), #output table
-        h4("The following data should have one row for each plot."),
+        h4("If the data has previously been tidied to only include the plot and species data columns, the following data should have one row for each plot."),
         h4("Would you like to use this data for graphing and/or statistical tests?"),
         actionButton("SRUseFiltered", "Yes"),
         DTOutput("SRFiltered")
@@ -252,6 +255,9 @@ server <- function(input, output, session) {
   data_to_use = "raw" #use v$data for graphing by default
   
   updateGraphingOptions = function(data_in_use) { #either filtered_na_rmvd_data() or diversity_data()
+    # TO DO: Could save space to save names(data_in_use) first
+    # TO DO: What does updateSelectInput do?
+    #p1 <- profmem({
     updateSelectInput(session, "monthCol", choices = names(data_in_use))
     updateSelectInput(session, "yearCol", choices = names(data_in_use))
     updateSelectInput(session, "precCol", choices = names(data_in_use))
@@ -281,8 +287,11 @@ server <- function(input, output, session) {
     updateSelectInput(session, "one_t_test_var", choices = c("None", names(data_in_use)))
     updateSelectInput(session, "two_sample_var_one", choices = c("None", names(data_in_use)))
     updateSelectInput(session, "two_sample_var_two", choices = c("None", names(data_in_use)))
-    
+    #})
+    #print(p1)
+    #print("Update Graphing Options")
   }
+  
   
   updateDiversityOptions = function(data_in_use) {
     # Species richness
@@ -322,6 +331,7 @@ server <- function(input, output, session) {
     req(file)
     #To do: Figure out how to put out a better warning message if they haven't input a file
     #validate(need(ext == "rtf", "Please upload an rtf file"))
+    p2 <- profmem({
     if (ext == "xlsx"){
       v$data = read_excel(file)
     }
@@ -329,6 +339,9 @@ server <- function(input, output, session) {
     else if (ext == "csv"){
       v$data = read_csv(file)
     }
+    })
+    print(p2)
+    print("Load file")
     
     postRead()
   })
@@ -356,8 +369,19 @@ server <- function(input, output, session) {
   output$table = renderDT(v$data, selection = list(target = "column"), 
                           filter = "top", server = TRUE, options = list(dom="ftp"))
   
-  new_data = reactive({ select(v$data, sort(input$table_columns_selected))  })
+  # TO DO: Seems like we shouldn't need three different steps?
+  # Esp. b/c all three of these are being saved in memory. That takes up a lot of memory.
+  p3 <- profmem({
+  new_data = reactive({ select(v$data, sort(input$table_columns_selected)) })
+  })
+  print(p3)
+  print("New data loaded")
+  p4 <- profmem({
   filtered_data = reactive({ new_data()[input$table_rows_all,] })
+  })
+  print(p4)
+  print("Filtered data loaded")
+  p5 <- profmem({
   filtered_na_rmvd_data = reactive({ 
     if (input$remove_na_vals){
       drop_na(filtered_data())
@@ -366,6 +390,9 @@ server <- function(input, output, session) {
       filtered_data()
     }
   })
+  })
+  print(p5)
+  print("Filtered NA Removed Data")
   
   output$newTable = renderDT({
     filtered_na_rmvd_data()
@@ -412,6 +439,7 @@ server <- function(input, output, session) {
   #### Start Species Richness
   
   calcSpeciesRichness = function(data_in, geo, sp) {
+    
     data_in %<>%
       group_by_(geo) %>%
       mutate_(sr = lazyeval::interp(~n_distinct(val), val=as.name(sp)))
@@ -419,6 +447,7 @@ server <- function(input, output, session) {
   }
   
   calcShannonWiener = function(data_in, geo, sp) {
+    p9 <- profmem({
     data_copy = data_in
     data_in %<>%
       group_by_(as.name(geo), as.name(sp)) %>%
@@ -426,6 +455,9 @@ server <- function(input, output, session) {
       mutate(total = sum(count_sw)) %>%
       summarise(SWIndex = -sum(count_sw / total * log(count_sw / total)))
     data_in = full_join(data_copy, data_in, by=str(geo))
+    })
+    print(p9)
+    print("Diversity index")
     return(data_in)
   }
   
@@ -629,6 +661,7 @@ server <- function(input, output, session) {
     numericInput('elev', 'Station Elevation', value=elevation)
   })
   
+  # Make the plot
   observeEvent(input$makePlot, {
     output$Walter = renderPlot({
       data_wl = graphing_data()
