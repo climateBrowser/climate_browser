@@ -136,7 +136,7 @@ ui <- fluidPage(
             selectInput("colorCol", "Color data points according to:", list("none")),
             actionButton("mapColorUpdated", "Color points"),
             selectInput("mapLat", "Latitude column:", list("none")),
-            selectInput("mapLong", "Longitutde column:", list("none")),
+            selectInput("mapLong", "Longitude column:", list("none")),
             actionButton("mapLatLongUpdated", "lat/long chosen")
           ),
           
@@ -191,7 +191,7 @@ ui <- fluidPage(
           tabPanel("Histogram",
             sidebarPanel(
              selectInput("xAxisHist", "X Axis", list("none")),
-             sliderInput("histBins", "Number of bins", min = 10, max = 1000, value = 20),
+             sliderInput("histBins", "Number of bins", min = 2, max = 100, value = 20),
              actionButton("makeHistogram", "Make Diagram"),
              p("Histograms display the distribution of continuous data.")
             ),
@@ -763,21 +763,33 @@ server <- function(input, output, session) {
   
   
   redraw_map = function(latCol, longCol, colCol) {
-    if (is.null(latCol) & is.null(longCol) & is.null(colCol)) {
+    # It would take some work, but if we could find some way to intuit which columns are Lat and Long,
+    # we could keep this code.
+    # The means used below is too simplistic and will lead to errors most of the time, 
+    # Unless we cheat by editing all the pre-loaded data so the columns are exactly the words below.
+    # if (is.null(latCol) & is.null(longCol) & is.null(colCol)) {
+    #   output$watershedMap <- renderLeaflet({
+    #     vals = reactiveValues(
+    #       m = mapview(graphing_data(), xcol = "Longitude", ycol = "Latitude", crs = 4269, grid = FALSE)
+    #     )
+    #     vals$m@map
+    #   })
+    # }
+    # 
+    # else if (is.null(latCol) & is.null(longCol)) {
+    #   #output$watershedMap <- renderLeaflet({
+    #   #  cvals = reactiveValues(
+    #   #    cm = mapview(graphing_data(), xcol = "Longitude", ycol = "Latitude", zcol = colCol, crs = 4269, grid = FALSE)
+    #   #  )
+    #   #  cvals$cm@map
+    #   #})
+    # }
+    if (is.null(latCol) | is.null(longCol)) {
       output$watershedMap <- renderLeaflet({
         vals = reactiveValues(
-          m = mapview(graphing_data(), xcol = "Longitude", ycol = "Latitude", crs = 4269, grid = FALSE)
-        )
+          m = mapview()
+         )
         vals$m@map
-      })
-    }
-    
-    else if (is.null(latCol) & is.null(longCol)) {
-      output$watershedMap <- renderLeaflet({
-        cvals = reactiveValues(
-          cm = mapview(graphing_data(), xcol = "Longitude", ycol = "Latitude", zcol = colCol, crs = 4269, grid = FALSE)
-        )
-        cvals$cm@map
       })
     }
     
