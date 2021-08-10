@@ -21,7 +21,11 @@ areaFile <- read_xlsx("data/DataAreaFile.xlsx", sheet = 2)
 # User interface ----
 ui <- fluidPage(
   navbarPage("Climate Browser", 
-    #navbarMenu("Graphing",  
+      tabPanel("Getting Started",
+        fluidRow(style = "height:400px;", align = "center",
+          includeMarkdown("data/getting_started.md")
+        )
+      ),
       tabPanel("Upload Data",
         fluidRow(style = "height:400px;",
           column(5, align = "center", 
@@ -54,7 +58,8 @@ ui <- fluidPage(
             h4("Select rows with the boxes at the top of each column"),
             h4("Choose whether to accept the new dataset below"),
                                      
-            checkboxInput("remove_na_vals", "Remove N/A values", value = FALSE),
+            checkboxInput("remove_na_vals", "Remove N/A values \n
+                          (Delete all rows in the filtered data that contain missing values)", value = FALSE),
             
             DTOutput("table"),
             h3("Results table:"),
@@ -225,21 +230,12 @@ ui <- fluidPage(
           mainPanel(
             textOutput("two_sample_output")
           )
-        ),
-        tabPanel("Log-Transform"),
-        tabPanel("ANOVA")
+        )
         ),     
       
-      tabPanel("References"
-      ),
-      tabPanel("Paper" 
-      ),
-      # I feel like maybe the above two should be combined into one tab
-      tabPanel("About the App")
-      # I think this should actually be the first tab, i.e. the landing page.
-      # Put an explanation about what the app does, 
-      # a brief explanation about how and why the app was created,
-      # and links to tutorials (YouTube?)
+      tabPanel("Learn More", 
+        includeHTML("data/paper.html")
+      )
              
   )
 )
@@ -317,16 +313,20 @@ server <- function(input, output, session) {
   
   
   # Reading in the file ---------
+  preLoaded <- FALSE
+  
   observeEvent(input$read, {
     #print("READ")
     file = input$file1$datapath
     ext <- tools::file_ext(file)
     
     if (is.null(file)) {
+      preLoaded <- TRUE
       fileName = as.character(areaFile[areaFile$Station == input$dataSource, "File"])
       file = paste("data", fileName, sep = "/")
       ext = tools::file_ext(file)
     }
+  
     
     req(file)
     #To do: Figure out how to put out a better warning message if they haven't input a file
@@ -641,23 +641,35 @@ server <- function(input, output, session) {
   
   # Auto fill based on previous input
   output$stationInfo <- renderUI({
-    stationName <- input$dataSource
+    stationName <- NULL
+    if (is.null(input$file1$datapath)){
+      stationName <- input$dataSource
+    }
     textInput('stationName', 'Name or location of the climatological station', 
               value=stationName)
   })
   
   output$stationLat <- renderUI({
-    latitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Latitude"])
+    latitude <- NULL
+    if (is.null(input$file1$datapath)){
+      latitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Latitude"])
+    }
     numericInput('lat', 'Station Latitude', value=latitude)
   })
   
   output$stationLong <- renderUI({
-    longitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Longitude"])
+    longitude <- NULL
+    if (is.null(input$file1$datapath)){
+      longitude <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Longitude"])
+    }
     numericInput('long', 'Station Longitude', value=longitude)
   })
   
   output$stationElev <- renderUI({
-    elevation <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Elevation"])
+    elevation <- NULL
+    if (is.null(input$file1$datapath)){
+      elevation <- as.numeric(areaFile[areaFile$Station == input$dataSource, "Elevation"])
+    }
     numericInput('elev', 'Station Elevation', value=elevation)
   })
   
