@@ -147,6 +147,7 @@ ui <- fluidPage(
           
           tabPanel("Scatter Plot",
             sidebarPanel(
+              textInput("scatterTitle", "Plot Title"),
               selectInput("xAxisScatter", "X Axis", list("none")),
               selectInput("yAxisScatter", "Y Axis", list("none")),
               actionButton("makeScatterPlot", "Make Diagram")
@@ -158,9 +159,10 @@ ui <- fluidPage(
           
           tabPanel("Violin Plot",
             sidebarPanel(
-             selectInput("xAxisViolin", "X Axis", list("none")),
-             selectInput("yAxisViolin", "Y Axis", list("none")),
-             actionButton("makeViolinPlot", "Make Diagram")
+              textInput("violinTitle", "Plot Title"), 
+              selectInput("xAxisViolin", "X Axis", list("none")),
+              selectInput("yAxisViolin", "Y Axis", list("none")),
+              actionButton("makeViolinPlot", "Make Diagram")
             ),
             mainPanel(
              plotOutput("violin")
@@ -169,6 +171,7 @@ ui <- fluidPage(
           
           tabPanel("Line Graph",
             sidebarPanel(
+             textInput("lineTitle", "Plot Title"),
              selectInput("xAxisLine", "X Axis", list("none")),
              selectInput("yAxisLine", "Y Axis", list("none")),
              selectInput("groupBy", "Group By", list("none")),
@@ -184,6 +187,7 @@ ui <- fluidPage(
           
           tabPanel("Boxplot",
             sidebarPanel(
+              textInput("boxTitle", "Plot Title"),
               selectInput("xAxisBox", "X Axis", list("none")),
               selectInput("yAxisBox", "Y Axis", list("none")),
               actionButton("makeBoxplot", "Make Diagram")
@@ -195,6 +199,7 @@ ui <- fluidPage(
           
           tabPanel("Histogram",
             sidebarPanel(
+             textInput("histTitle", "Plot Title"),
              selectInput("xAxisHist", "X Axis", list("none")),
              sliderInput("histBins", "Number of bins", min = 2, max = 100, value = 20),
              actionButton("makeHistogram", "Make Diagram"),
@@ -851,12 +856,14 @@ server <- function(input, output, session) {
     output$scatter = renderPlot({
       scatter_data = graphing_data()
       
+      title <- input$scatterTitle
       xAxis = input$xAxisScatter
       yAxis = input$yAxisScatter
       scatter_data[[xAxis]] = as.numeric(scatter_data[[xAxis]])
       scatter_data[[yAxis]] = as.numeric(scatter_data[[yAxis]])
       ggplot(scatter_data) + 
         geom_point(aes_(x = as.name(xAxis), y = as.name(yAxis))) +
+        ggtitle(title) +
         theme_bw()
     }#,
     #width = 500,
@@ -870,11 +877,13 @@ server <- function(input, output, session) {
 
   observeEvent(input$makeViolinPlot, {
     violin_data = graphing_data()
+    title <- input$violinTitle
     violin_data[[input$xAxisViolin]] = as.factor(violin_data[[input$xAxisViolin]])
     
     output$violin = renderPlot({
       ggplot(data = violin_data, aes_q(x = as.name(input$xAxisViolin), y = as.name(input$yAxisViolin))) +
         geom_violin() +
+        ggtitle(title) +
         theme_bw()
     })
   })
@@ -888,6 +897,7 @@ server <- function(input, output, session) {
     output$line = renderPlot({
       line_data = graphing_data()
       
+      title <- input$lineTitle
       xAxis = input$xAxisLine
       yAxis = input$yAxisLine
       if(all(!is.na(as.numeric(line_data[[xAxis]])))){
@@ -912,6 +922,7 @@ server <- function(input, output, session) {
         geom_line(aes_(x = as.name(xAxis), y = as.name(yAxis), group=groupBy, color=colorChoice), 
                   size=lineSize) +
         scale_color_brewer(palette=input$palette) +
+        ggtitle(title) +
         theme_bw()
     }#,
     #width = 500,
@@ -925,11 +936,13 @@ server <- function(input, output, session) {
   
   observeEvent(input$makeBoxplot, {
     box_data = graphing_data()
+    title <- input$boxTitle
     box_data[[input$xAxisBox]] = as.factor(box_data[[input$xAxisBox]])
   
     output$box = renderPlot({
       ggplot(data = box_data, aes_q(x = as.name(input$xAxisBox), y = as.name(input$yAxisBox))) +
         geom_boxplot() +
+        ggtitle(title) +
         theme_bw()
     })  
   })
@@ -941,11 +954,13 @@ server <- function(input, output, session) {
   
   observeEvent(input$makeHistogram, {
     hist_data = graphing_data()
+    title <- input$histTitle
     hist_data[[input$xAxisHist]] = as.double(hist_data[[input$xAxisHist]])
     
     output$histogram = renderPlot({
       ggplot(data = hist_data, aes_q(as.name(input$xAxisHist))) +
         geom_histogram(bins=input$histBins) + #, stat = "count") +
+        ggtitle(title) +
         theme_bw()
     })  
   })
