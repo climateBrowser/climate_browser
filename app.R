@@ -20,7 +20,7 @@ areaFile <- read_xlsx("data/File_Navigation.xlsx", sheet = 2)
 
 # User interface ----
 ui <- fluidPage(
-  navbarPage("Climate Browser", 
+  navbarPage("Ecology Browser", 
       tabPanel("Getting Started",
         fluidRow(style = "height:400px;", align = "center",
           includeMarkdown("data/getting_started.md")
