@@ -15,8 +15,8 @@ library("RColorBrewer")
 library(profmem)
 
 
-dataArea <- read_xlsx("data/DataAreaFile.xlsx", sheet = 1)
-areaFile <- read_xlsx("data/DataAreaFile.xlsx", sheet = 2)
+dataArea <- read_xlsx("data/File_Navigation.xlsx", sheet = 1)
+areaFile <- read_xlsx("data/File_Navigation.xlsx", sheet = 2)
 
 # User interface ----
 ui <- fluidPage(
