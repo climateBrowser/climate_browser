@@ -113,10 +113,6 @@ ui <- fluidPage(
               uiOutput("stationLat"),
               uiOutput("stationLong"),
               uiOutput("stationElev"),
-              #textInput('stationName', 'Name or location of the climatological station'),
-              #numericInput('lat', 'Station Latitude', value=1),
-              #numericInput('long', 'Station Longitude', value=1),
-              #numericInput('alt', "Station Altitude", value=1),
               selectInput("monthCol", "Month column name", list("none")),
               selectInput("yearCol", "Year column name", list("none")),
               selectInput("precCol", "Precipitation column name", list("none")),
@@ -135,7 +131,7 @@ ui <- fluidPage(
             )
           ),
           
-          tabPanel("Geoplotting",
+          tabPanel("Geoplot",
             h1("Map your data"),
             leafletOutput("watershedMap"),
             selectInput("colorCol", "Color data points according to:", list("none")),
