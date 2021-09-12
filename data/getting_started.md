@@ -7,9 +7,10 @@ Welcome to the Ecology Browser!
 #### The *Getting Started* page includes tutorials for the various features on the browser. </br>
 #### For more information about this site, see our paper on the *Learn More* page. </br>
 ______
-*Tutorials will be here* </br>
+### Tutorials </br>
+[Introduction](https://youtu.be/G8ImQxj3zAw) </br>
 ______
 **Contact Information** </br>
 Dr. Gill: richard_gill@byu.edu </br>
-Louisa Dayton: <dayton.louisa@gmail.com> </br>
+Louisa Dayton: <dayton.louisa@gmail.com> </br> </br> </br>
 
