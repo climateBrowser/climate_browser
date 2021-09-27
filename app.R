@@ -703,8 +703,7 @@ server <- function(input, output, session) {
       }
       data_wl = rename(data_wl, Month = monthCol, Year = yearCol, Prec = precCol, Tmax = maxTempCol, Tmin = minTempCol)
       
-      print(input$prec)
-      if (input$prec == "inches") {
+      if (input$prec == "inch") {
         data_wl = mutate(data_wl, Prec = Prec * 25.4)
       }
       
