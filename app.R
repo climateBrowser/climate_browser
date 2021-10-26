@@ -478,6 +478,8 @@ server <- function(input, output, session) {
   }
   
   calcSimpson = function(data_in, geo, sp) {
+    print("Calculating simpson")
+    #To do: fix this
     data_in %<>%
       group_by_(as.name(geo), as.name(sp)) %>%
       mutate(count_sms = n()) %>%
