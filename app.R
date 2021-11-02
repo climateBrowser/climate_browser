@@ -234,7 +234,9 @@ ui <- fluidPage(
         )
         ),     
       
-      tabPanel("Learn More", 
+      tabPanel("Learn More
+               
+               ", 
         includeHTML("data/paper.html")
       )
              
@@ -248,7 +250,7 @@ server <- function(input, output, session) {
   #### Reading in File and Outputting Table
   
   # TO DO: Help the server update data without reloading.
-  v = reactiveValues(data = NULL, data_in_use = NULL)
+  v = reactiveValues(data = NULL, data_in_use = NULL, temp_simpson_data = NULL)
   data_to_use = "raw" #use v$data for graphing by default
   
   updateGraphingOptions = function(data_in_use) { #either filtered_na_rmvd_data() or diversity_data()
@@ -478,14 +480,27 @@ server <- function(input, output, session) {
   }
   
   calcSimpson = function(data_in, geo, sp) {
+    print(geo)
+    print(sp)
     print("Calculating simpson")
     #To do: fix this
+    # data_in %<>%
+    #   group_by_(as.name(geo), as.name(sp)) %>%
+    #   mutate(count_sms = n()) %>%
+    #   group_by_(as.name(geo)) %>%
+    #   mutate(total = n()) %>%
+    #   group_by_(as.name(geo), as.name(sp)) %>%
+    #   mutate(simpson = 1 / ( sum( (count_sms / total)  ^ 2 ) ) ) #%>%
+      #select(-count_sms)
+    
     data_in %<>%
       group_by_(as.name(geo), as.name(sp)) %>%
-      mutate(count_sms = n()) %>%
+      summarise(count_sp = n()) %>%
       group_by_(as.name(geo)) %>%
-      mutate(simpson = 1 / sum((count_sms / sum(count_sms)) ^ 2)) %>%
-      select(-count_sms)
+      mutate(total = sum(count_sp)) %>%
+      mutate(simp_denom = (count_sp / total) ^ 2) %>%
+      summarise(simp = sum(simp_denom))
+ 
     return(data_in)
   }
   
@@ -569,7 +584,8 @@ server <- function(input, output, session) {
   # })
   
   observeEvent(input$SRCalc, {
-    #print(input$SRDesired)
+    print("SRDESIRED")
+    print(input$SRDesired)
     if ("1" %in% input$SRDesired) {
       #print("PIE")
       v$data_in_use = calcSpeciesRichness(v$data_in_use, input$SRGeo, input$SRSp)
@@ -582,7 +598,7 @@ server <- function(input, output, session) {
       v$data_in_use = calcBergerParker(v$data_in_use, input$SRGeo, input$SRSp)
     }
     if ("5" %in% input$SRDesired) {
-      v$data_in_use = calcSimpson(v$data_in_use, input$SRGeo, input$SRSp)
+      v$temp_simpson_data = calcSimpson(v$data_in_use, input$SRGeo, input$SRSp)
     }
     if ("6" %in% input$SRDesired) {
       v$data_in_use = calcMenhinick(v$data_in_use, input$SRGeo, input$SRSp)
@@ -608,17 +624,35 @@ server <- function(input, output, session) {
     v$data_in_use %>%
       select(-as.name(input$SRSp)) %>%
       unique()
+    
   })
   
+  diversity_filtered_w_simpson = reactive({
+    v$data_in_use %>%
+      select(-as.name(input$SRSp)) %>%
+      unique() %>%
+      merge(v$temp_simpson_data)
+  })
+  
+  
   output$SRFiltered = renderDT(
-    diversity_filtered()
+    
+    if (!"5" %in% input$SRDesired) {
+      diversity_filtered()
+    }
+    else if (input$SRDesired == c("5")) {
+      v$temp_simpson_data
+    }
+    else {
+      diversity_filtered_w_simpson()
+    }
   )
   
   observeEvent(input$SRUseFiltered, {
     v$data_in_use = diversity_filtered()
     data_to_use <<- "diversity"
     updateGraphingOptions(v$data_in_use)
-    #print(v$data_in_use)
+    
   }) 
   
   #### End Species Richness
